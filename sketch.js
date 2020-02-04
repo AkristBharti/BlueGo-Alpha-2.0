@@ -118,7 +118,7 @@ function draw() {
     background(0,110,200); 
     textSize(40);
     fill(255, 0, 0);
-    text("Score : "+score, diswidth/10, disheight/10);
+    text("Score : "+score, diswidth-200, disheight-200);
     if(monstergroup.isTouching(player)){
       monstergroup.destroyEach();
       var explosion = createSprite(player.x, player.y-20, 10, 10);
@@ -185,7 +185,7 @@ function draw() {
     background(0,110,200); 
     textSize(40);
     fill(255, 0, 0);
-    text("Score : "+score, diswidth/10, disheight/10);
+    text("Score : "+score, diswidth-200, disheight-200);
     
     if(demon.x < player.x){
       demon.changeAnimation('demonfromleft');
