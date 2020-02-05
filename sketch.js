@@ -1,34 +1,47 @@
-var player, diswidth, disheight, invground, backobj, demon, demonhealth;
-var prevy, playerallow;
-var ground, groundgroup, monstergroup, bulletgroup, bossgroup;
-var score, health, sideindex, playerhealth, playerhealthimg;
+var player, diswidth, disheight, invground, backobj, demon, demonhealth, demonweapon;
+var prevy, playerallow, playerline, demonindex, demonindex2;
+var ground, groundgroup, monstergroup, bulletgroup, bossgroup, monster2group, skullgroup2;
+var score, health, sideindex, playerhealth, playerhealthimg, song;
+var playerleft, playerright, win, over, reset;
 
 function setup() {
   createCanvas(displayWidth-200,displayHeight-200);
   diswidth = displayWidth-200;
   playerhealth = 8;
   disheight = displayHeight-200;
+  demonindex = 0;
+  demonindex2 = 0;
+  reset= createSprite(diswidth/2, disheight/2, 10, 10);
   ground = createSprite(diswidth/2, disheight-250, diswidth +20, 20);
   player = createSprite(diswidth/2, disheight/2, 50, 50);
-  demonhealth = 10;
+  playerline = createSprite(player.x, player.y, 5, disheight);
+  demonhealth = 500;
   demon = createSprite(diswidth-100, ground.y -200, diswidth+50, 30);
   backobj = createSprite(diswidth/2, disheight-230, diswidth, 20);
   invground = createSprite(diswidth/2, disheight-250, diswidth, 18);
   invground.depth = 1;
+  demon.setCollider('rectangle', 0, 0, 120, 100);
+  demonweapon = createSprite(demon.x, ground.y - 40, 10, 10);
   playbtn = createSprite(diswidth/2, disheight/2, 100, 30);
   groundgroup = createGroup();
   bulletgroup = createGroup();
   monstergroup = createGroup();
   skullgroup = createGroup();
+  skullgroup2 = createGroup();
+  demon.depth = 160;
   bossgroup = createGroup();
+  monster2group = createGroup();
   gamestate = 'home';
   playerhealthimg = createSprite(200, 100,10, 10);
   playerhealthimg.scale = 3;
   score = 0;
+  win = createSprite(diswidth/2, disheight/2+300, 10, 10);
+  over = createSprite(diswidth/2, disheight/2+300, 10, 10);
   //player.debug = true;
   prevy = disheight/2;
   playerallow = 0;
   sideindex = 0;
+  
   backobj.addImage('backobjs', backimage)
   playerhealthimg.addImage('health8', health8img);
   playerhealthimg.addImage('health7', health7img);
@@ -39,6 +52,9 @@ function setup() {
   playerhealthimg.addImage('health2', health2img);
   playerhealthimg.addImage('health1', health1img);
   playerhealthimg.addImage('health0', health0img);
+  win.addImage('win', winimg);
+  over.addImage('over', overimg);
+  reset.addImage('reset', resetimg);
   ground.addImage('background', groundimg);
   playbtn.addImage('playbtn1', play1img);
   player.addAnimation('idleright', playeridle);
@@ -51,6 +67,8 @@ function setup() {
   player.addAnimation('hurtright', playerhurtright);
   demon.addAnimation('demonfromright', demonright);
   demon.addAnimation('demonfromleft', demonleft);
+  demon.addAnimation('demonattackfromleft', demonattackleft);
+  demon.addAnimation('demonattackfromright', demonattackright);
   wolfrunright.frameDelay = 1+1/2;
   playerjump.frameDelay = 5;
   backobj.scale = 3;
@@ -59,6 +77,10 @@ function setup() {
   //groundgroup.add(ground);
 }
 function preload(){
+  song = loadSound("Assets/gamemusic.mp3");
+  winimg = loadImage('Assets/win.png');
+  resetimg = loadImage('Assets/reset.png');
+  overimg = loadImage('Assets/gameover.png');
   health8img = loadImage('Assets/health8;.png');
   health7img = loadImage('Assets/health7;.png');
   health6img = loadImage('Assets/health6;.png');
@@ -73,9 +95,13 @@ function preload(){
   play1img = loadImage('Assets/play1.png');
   play2img =  loadImage('Assets/play2.png');
   demonright = loadAnimation('Assets/demon1.png', 'Assets/demon2.png', 'Assets/demon3.png', 'Assets/demon4.png', 'Assets/demon5.png');
+  demonattackright = loadAnimation('Assets/demonattack1.png', 'Assets/demonattack2.png', 'Assets/demonattack3.png', 'Assets/demonattack4.png', 'Assets/demonattack5.png','Assets/demonattack6.png', 'Assets/demonattack7.png','Assets/demonattack8.png', 'Assets/demonattack9.png', 'Assets/demonattack10.png','Assets/demonattack11.png');
+  demonattackleft = loadAnimation('Assets/demonattackl1.png', 'Assets/demonattackl2.png', 'Assets/demonattackl3.png', 'Assets/demonattackl4.png', 'Assets/demonattackl5.png','Assets/demonattackl6.png', 'Assets/demonattackl7.png','Assets/demonattackl8.png', 'Assets/demonattackl9.png', 'Assets/demonattackl10.png','Assets/demonattackl11.png');
   demonleft = loadAnimation('Assets/demonl1.png', 'Assets/demonl2.png', 'Assets/demonl3.png', 'Assets/demonl4.png', 'Assets/demonl5.png');
-  skullright = loadAnimation('Assets/skull1.png', 'Assets/skull2.png', 'Assets/skull3.png', 'Assets/skull4.png','Assets/skull5.png', 'Assets/skull6.png', 'Assets/skull7.png', 'Assets/skull8.png')
+  skullright = loadAnimation('Assets/skull1.png', 'Assets/skull2.png', 'Assets/skull3.png', 'Assets/skull4.png','Assets/skull5.png', 'Assets/skull6.png', 'Assets/skull7.png', 'Assets/skull8.png');
+  skullleft = loadAnimation('Assets/skulll1.png', 'Assets/skulll2.png', 'Assets/skulll3.png', 'Assets/skulll4.png','Assets/skulll5.png', 'Assets/skulll6.png', 'Assets/skulll7.png', 'Assets/skulll8.png');
   wolfrunright = loadAnimation('Assets/wolfrun1.png', 'Assets/wolfrun2.png', 'Assets/wolfrun3.png','Assets/wolfrun4.png', 'Assets/wolfrun5.png', 'Assets/wolfrun1.png', 'Assets/wolfrun2.png', 'Assets/wolfrun3.png','Assets/wolfrun4.png', 'Assets/wolfrun5.png');
+  wolfrunleft = loadAnimation('Assets/wolfrunl1.png', 'Assets/wolfrunl2.png', 'Assets/wolfrunl3.png','Assets/wolfrunl4.png', 'Assets/wolfrunl5.png', 'Assets/wolfrunl1.png', 'Assets/wolfrunl2.png', 'Assets/wolfrunl3.png','Assets/wolfrunl4.png', 'Assets/wolfrunl5.png');
   playerrunright = loadAnimation('Assets/walk1.png', 'Assets/walk2.png', 'Assets/walk3.png', 'Assets/walk4.png', 'Assets/walk5.png', 'Assets/walk6.png');  
   playerattackright = loadAnimation('Assets/attack1.png', 'Assets/attack2.png', 'Assets/attack3.png', 'Assets/attack4.png', 'Assets/attack5.png', 'Assets/attack6.png');
   playerattackleft = loadAnimation('Assets/attackl1.png', 'Assets/attackl2.png', 'Assets/attackl3.png', 'Assets/attackl4.png', 'Assets/attackl5.png', 'Assets/attackl6.png');  
@@ -89,22 +115,33 @@ function preload(){
   //groundgroup.add(ground)
 }
 function draw() {
+  //song.play();
+  playerline.visible = false;
   invground.visible = false;
   //Controls
   player.collide(invground);
   //projectile();
   monstergroup.collide(invground);
+  monster2group.collide(invground);
   if(gamestate === 'home'){
     playerhealthimg.visible = false;
+    win.visible = false;
+    over.visible = false;
     ground.visible = false;
     playbtn.visible = true;
     backobj.visible = false;
     demon.visible = false;
+    reset.visible = false;
+    clouds();
     if(mouseDown()){
       gamestate = 'play';
     }
   }
   if(gamestate === 'play'){
+    win.visible = false;
+    demon.visible = false;
+    reset.visible = false;
+    over.visible = false;
     playerhealthimg.visible = true;
     ground.visible = true;
     backobj.visible = true;
@@ -112,8 +149,10 @@ function draw() {
     if(playerhealth <8){
       playerhealthimg.changeAnimation('health'+playerhealth);
     }
+    monsters1(score)
     monsters(score);
     skulls(score);
+    skulls2(score);
     player.scale = 3;
     background(0,110,200); 
     textSize(40);
@@ -121,6 +160,85 @@ function draw() {
     text("Score : "+score, diswidth-200, disheight-200);
     if(monstergroup.isTouching(player)){
       monstergroup.destroyEach();
+      var explosion = createSprite(player.x, player.y-20, 10, 10);
+      explosionanim=loadAnimation('Assets/explosion1.png','Assets/explosion2.png', 'Assets/explosion3.png','Assets/explosion4.png', 'Assets/explosion5.png', 'Assets/explosion6.png', 'Assets/explosion7.png', 'Assets/explosion8.png', 'Assets/explosion9.png', 'Assets/explosion10.png')
+      explosionanim.frameDelay = 2;
+      explosion.addAnimation('explode', explosionanim);
+      explosion.lifetime = 26;
+      
+      playerhealth = playerhealth - 1;
+    }
+    if(playerhealth<=0){
+      gamestate ='end';
+    }
+    if(skullgroup.isTouching(player)){
+      skullgroup.destroyEach();
+      var explosion = createSprite(player.x, player.y-20, 10, 10);
+      explosion.scale = 3;
+      explosionupanim=loadAnimation('Assets/explosionup1.png','Assets/explosionup2.png', 'Assets/explosionup3.png','Assets/explosionup4.png', 'Assets/explosionup5.png', 'Assets/explosionup6.png', 'Assets/explosionup7.png', 'Assets/explosionup8.png')
+      explosionupanim.frameDelay = 2;
+      explosion.addAnimation('explodeup', explosionupanim);
+      explosion.lifetime = 26;
+      
+      playerhealth = playerhealth - 1;
+    }
+    if(skullgroup2.isTouching(player)){
+      skullgroup2.destroyEach();
+      var explosion = createSprite(player.x, player.y-20, 10, 10);
+      explosion.scale = 3;
+      explosionupanim=loadAnimation('Assets/explosionup1.png','Assets/explosionup2.png', 'Assets/explosionup3.png','Assets/explosionup4.png', 'Assets/explosionup5.png', 'Assets/explosionup6.png', 'Assets/explosionup7.png', 'Assets/explosionup8.png')
+      explosionupanim.frameDelay = 2;
+      explosion.addAnimation('explodeup', explosionupanim);
+      explosion.lifetime = 26;
+      
+      playerhealth = playerhealth - 1;
+    }
+    if(monstergroup.isTouching(playerline)){
+      monstergroup.destroyEach();
+      var explosion = createSprite(player.x, player.y-20, 10, 10);
+      explosionanim=loadAnimation('Assets/explosion1.png','Assets/explosion2.png', 'Assets/explosion3.png','Assets/explosion4.png', 'Assets/explosion5.png', 'Assets/explosion6.png', 'Assets/explosion7.png', 'Assets/explosion8.png', 'Assets/explosion9.png', 'Assets/explosion10.png')
+      explosionanim.frameDelay = 2;
+      explosion.addAnimation('explode', explosionanim);
+      explosion.lifetime = 26;
+      
+      playerhealth = playerhealth - 1;
+    }
+    if(monster2group.isTouching(playerline)){
+      monster2group.destroyEach();
+      var explosion = createSprite(player.x, player.y-20, 10, 10);
+      explosionanim=loadAnimation('Assets/explosion1.png','Assets/explosion2.png', 'Assets/explosion3.png','Assets/explosion4.png', 'Assets/explosion5.png', 'Assets/explosion6.png', 'Assets/explosion7.png', 'Assets/explosion8.png', 'Assets/explosion9.png', 'Assets/explosion10.png')
+      explosionanim.frameDelay = 2;
+      explosion.addAnimation('explode', explosionanim);
+      explosion.lifetime = 26;
+      
+      playerhealth = playerhealth - 1;
+    }
+    if(skullgroup.isTouching(playerline)){
+      skullgroup.destroyEach();
+      var explosion = createSprite(player.x, player.y-20, 10, 10);
+      explosion.scale = 3;
+      explosionupanim=loadAnimation('Assets/explosionup1.png','Assets/explosionup2.png', 'Assets/explosionup3.png','Assets/explosionup4.png', 'Assets/explosionup5.png', 'Assets/explosionup6.png', 'Assets/explosionup7.png', 'Assets/explosionup8.png')
+      explosionupanim.frameDelay = 2;
+      explosion.addAnimation('explodeup', explosionupanim);
+      explosion.lifetime = 26;
+      
+      playerhealth = playerhealth - 1;
+      
+    }
+    if(skullgroup2.isTouching(playerline)){
+      skullgroup2.destroyEach();
+      var explosion = createSprite(player.x, player.y-20, 10, 10);
+      explosion.scale = 3;
+      explosionupanim=loadAnimation('Assets/explosionup1.png','Assets/explosionup2.png', 'Assets/explosionup3.png','Assets/explosionup4.png', 'Assets/explosionup5.png', 'Assets/explosionup6.png', 'Assets/explosionup7.png', 'Assets/explosionup8.png')
+      explosionupanim.frameDelay = 2;
+      explosion.addAnimation('explodeup', explosionupanim);
+      explosion.lifetime = 26;
+      
+      playerhealth = playerhealth - 1;
+      
+    }
+    if(monster2group.isTouching(player)){
+      monster2group.destroyEach();
       var explosion = createSprite(player.x, player.y-20, 10, 10);
       explosionanim=loadAnimation('Assets/explosion1.png','Assets/explosion2.png', 'Assets/explosion3.png','Assets/explosion4.png', 'Assets/explosion5.png', 'Assets/explosion6.png', 'Assets/explosion7.png', 'Assets/explosion8.png', 'Assets/explosion9.png', 'Assets/explosion10.png')
       explosionanim.frameDelay = 2;
@@ -146,11 +264,13 @@ function draw() {
     }
     if(keyDown('left')){
       player.x = player.x - 13;
+      playerline.x = playerline.x - 13;
       player.changeAnimation('runleft')
       sideindex = 1;
     }
     if(keyDown('right')){
       player.x = player.x +13;
+      playerline.x = playerline.x +13;
       player.changeAnimation('runright')
       sideindex = 0;
       
@@ -158,13 +278,24 @@ function draw() {
     if(player.isTouching(monstergroup)||player.collide(skullgroup)){
       player.changeAnimation('hurtright');
     }
+    if(player.isTouching(monster2group)||player.collide(skullgroup)){
+      player.changeAnimation('hurtright');
+    }
     //All Controls Extra
     if(bulletgroup.isTouching(monstergroup)){
       monstergroup.destroyEach();
       score+=10;
     }
+    if(bulletgroup.isTouching(monster2group)){
+      monster2group.destroyEach();
+      score+=10;
+    }
     if(bulletgroup.isTouching(skullgroup)){
       skullgroup.destroyEach();
+      score+=20;
+    }
+    if(bulletgroup.isTouching(skullgroup2)){
+      skullgroup2.destroyEach();
       score+=20;
     }
     if(sideindex ===0){
@@ -174,12 +305,15 @@ function draw() {
       weapon('left');
     }
     player.velocityY = player.velocityY + 1;
-    if(score >= 20){
+    if(score >= 500){
       gamestate = 'boss';
     }
   }
   if(gamestate === 'boss'){
+    win.visible = false;
+    over.visible = false;
     demon.visible = true;
+    reset.visible = false;
     demon.scale = 2.4
     player.scale = 3;
     background(0,110,200); 
@@ -187,18 +321,48 @@ function draw() {
     fill(255, 0, 0);
     text("Score : "+score, diswidth-200, disheight-200);
     
-    if(demon.x < player.x){
-      demon.changeAnimation('demonfromleft');
-    }
-    if(demon.x > player.x){
-      demon.changeAnimation('demonfromright');
-    }
+    //Left : 1   Right: 2
     if(demon.x === 100){
-      demon.velocityX = 10;
+      demon.velocityX = 5;
     }
     if(demon.x === diswidth - 100){
-      demon.velocityX = -10;
+      demon.velocityX = -5;
     }
+    if(bulletgroup.isTouching(demon)){
+      var explosion = createSprite(demon.x, demon.y, 10, 10);
+      explosion.scale = 3;
+      explosionupanim=loadAnimation('Assets/explosionup1.png','Assets/explosionup2.png', 'Assets/explosionup3.png','Assets/explosionup4.png', 'Assets/explosionup5.png', 'Assets/explosionup6.png', 'Assets/explosionup7.png', 'Assets/explosionup8.png')
+      explosionupanim.frameDelay = 1;
+      explosion.depth = demon.depth-1;
+      explosion.addAnimation('explodeup', explosionupanim);
+      explosion.lifetime = 26;
+      demonhealth= demonhealth - 1;
+    }
+    if(demonhealth <= 0){
+      gamestate = 'win';
+    }
+    if(demon.x-player.x <diswidth/6 && demon.x-player.x > 0){
+      demon.changeAnimation('demonattackfromright');
+      if(demon.x-player.x <150&& player.y > ground.y-80){
+        gamestate = 'end'
+      }
+    }
+
+    if(demon.x-player.x >diswidth/6){
+      demon.changeAnimation('demonfromright');
+      
+    }
+    if(player.x-demon.x >diswidth/6){
+      demon.changeAnimation('demonfromleft');
+    }
+    if(player.x-demon.x <diswidth/6 && player.x-demon.x > 0){
+      demon.changeAnimation('demonattackfromleft');
+      demonweapon.x = demon.x +200
+      if(player.x-demon.x <150&& player.y > ground.y-60){
+        gamestate = 'end'
+      }
+    }
+    demonweapon.x = diswidth;
     if(player.y > ground.y - 61){
       playerallow = 0;
       if(sideindex ===0){
@@ -237,6 +401,60 @@ function draw() {
     }
     player.velocityY = player.velocityY + 1;
   }
+  if(gamestate === 'end'){
+    background("white");
+    demon.velocityX = 0;
+    ground.visible = false;
+    reset.visible = false;
+    backobj.visible = false;
+    playerhealthimg.visible = false;
+    player.visible = false;
+    win.visible = false;
+    monstergroup.destroyEach();
+    monster2group.destroyEach();
+    skullgroup.destroyEach();
+    over.visible = true;
+    textSize(30);
+    text("Game Over!", diswidth/2, (disheight+100))
+    text("Your Score Was : "+score, (diswidth/2)-100, (disheight/2)-200);
+    /*if(mouseDown()){
+      playerhealthimg.visible = true;
+      playerhealth= 8;
+      score = 0;
+      playerhealthimg.changeAnimation('health8');
+      player.visible = true;
+      ground.visible = true;
+      backobj.visible = true;
+      gamestate = 'play';
+    }*/
+  }
+  if(gamestate === 'win'){
+    background("white");
+    demon.visible = false;
+    demon.velocityX = 0;
+    reset.visible = false;
+    ground.visible = false;
+    backobj.visible = false;
+    playerhealthimg.visible = false;
+    player.visible = false;
+    win.visible = true;
+    monstergroup.destroyEach();
+    monster2group.destroyEach();
+    skullgroup.destroyEach();
+    over.visible = false;
+    textSize(30);
+    text("Your Score Was : 1500", ((diswidth/2)-200), (disheight/2)-200);
+    /*if(mouseDown()){
+      playerhealthimg.visible = true;
+      playerhealth= 8;
+      score = 0;
+      playerhealthimg.changeAnimation('health8');
+      player.visible = true;
+      ground.visible = true;
+      backobj.visible = true;
+      gamestate = 'play';
+    }*/
+  }
   drawSprites();
 }
 function projectile(){
@@ -246,7 +464,7 @@ function projectile(){
   }
 }
 function monsters(score){
-  if(score < 200){
+  if(score < 500){
     if(frameCount % 90 === 0){
       var monster = createSprite(diswidth + 50, ground.y -80, 30, 30);
       monster.addAnimation('runright', wolfrunright);
@@ -258,8 +476,22 @@ function monsters(score){
     }
   }
 }
+function monsters1(score){
+  if(score < 500){
+    if(frameCount % 90 === 0){
+      var monster = createSprite(-50, ground.y -80, 30, 30);
+      monster.addAnimation('runleft', wolfrunleft);
+      wolfrunleft.frameDelay = 3;
+      monster.velocityY = monster.velocityY +10;
+      monster.velocityX = 10;
+      monster.scale = 2.4
+      monster.lifetime = 400;
+      monster2group.add(monster);
+    }
+  }
+}
 function skulls(score){
-  if(score < 200){
+  if(score < 500){
     if(frameCount % 100 === 0){
       var skull = createSprite(diswidth+50, ground.y -200, 30, 30);
       skull.addAnimation('skullright', skullright);
@@ -267,6 +499,18 @@ function skulls(score){
       skull.scale = 1.3;
       skull.lifetime = 400;
       skullgroup.add(skull);
+    }
+  }
+}
+function skulls2(score){
+  if(score < 500){
+    if(frameCount % 100 === 0){
+      var skull = createSprite(-50, ground.y -200, 30, 30);
+      skull.addAnimation('skullleft', skullleft);
+      skull.velocityX = 10;
+      skull.scale = 1.3;
+      skull.lifetime = 400;
+      skullgroup2.add(skull);
     }
   }
 }
@@ -286,6 +530,7 @@ function weapon(playerside){
         bullet.velocityX = 28;
         bullet.addAnimation('fireright',firerightanim);
         bullet.scale = 2.5;
+        bullet.depth = 10
         bulletgroup.add(bullet)
         bullet.lifetime = 400;
       }
@@ -294,9 +539,21 @@ function weapon(playerside){
         bullet.velocityX = -28;
         bullet.addAnimation('fireleft',fireleftanim);
         bullet.scale = 2.5;
+        bullet.depth = 10
         bulletgroup.add(bullet);
       }
     }
   }
   
+}
+function clouds(){
+  //if(frameCount%(diswidth/15)===0){
+  var cloud = createSprite(diswidth+60, disheight/0.7, 10,10);
+  cloudImage = loadImage('Assets/cloud'+round(random(1,3))+".png");
+  cloud.addImage('img', cloudImage)
+  cloud.velocityX = -5;
+  cloud.depth = 100;
+  cloud.lifetime = 200;
+  cloud.debug = true;
+  //}
 }
