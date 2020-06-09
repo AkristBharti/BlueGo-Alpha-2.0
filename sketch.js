@@ -305,7 +305,7 @@ function draw() {
       weapon('left');
     }
     player.velocityY = player.velocityY + 1;
-    if(score >= 500){
+    if(score >= 100){
       gamestate = 'boss';
     }
   }
